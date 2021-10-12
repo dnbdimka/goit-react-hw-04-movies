@@ -1,14 +1,26 @@
 import React, { useState, useEffect } from "react";
-import { Link, useRouteMatch } from "react-router-dom";
+import { Link, useRouteMatch, useLocation, useHistory } from "react-router-dom";
 import { getMoviesByQuery } from "../services/API";
 
 const MoviesPage = () => {
   const [query, setQuery] = useState("");
   const [movies, setMovies] = useState([]);
   const match = useRouteMatch();
-  console.log(match);
+  const location = useLocation();
+  const history = useHistory();
 
-  useEffect(() => {}, [query]);
+  console.log(query);
+  // console.log(location);
+
+  useEffect(() => {
+    const searchQuery = new URLSearchParams(location.search).get("query");
+    // console.log(searchQuery);
+    setQuery(searchQuery);
+    if (searchQuery) {
+      getMoviesByQuery(searchQuery).then((data) => setMovies([...data]));
+      return;
+    }
+  }, [location.search]);
 
   const onInputChange = (e) => {
     setQuery(e.target.value);
@@ -16,6 +28,13 @@ const MoviesPage = () => {
   const onSearchSubmit = (e) => {
     e.preventDefault();
     getMoviesByQuery(query).then((data) => setMovies([...data]));
+
+    history.push({
+      ...location,
+      // pathname: location.pathname,
+      search: `query=${query}`,
+    });
+    // location.search = `?query=${query}`;
   };
 
   return (
@@ -30,7 +49,11 @@ const MoviesPage = () => {
             <Link
               to={{
                 pathname: `${match.url}/${movie.id}`,
-                state: { from: match.url },
+                state: {
+                  from: match.url,
+                  search: `query=${query}`,
+                },
+                // search: `query=${query}`,
               }}
             >
               {movie.name}
